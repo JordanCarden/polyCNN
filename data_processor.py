@@ -33,8 +33,8 @@ def convert_to_matrix(input_list, max_length=20):
     Returns:
         numpy.ndarray: 3x20 matrix where:
             - Row 0: 0/1, 1 if position has a monomer, else 0
-            - Row 1: E-type count (+1), 0 if not E
-            - Row 2: S-type count (+1), 0 if not S
+            - Row 1: E-type count, 0 if not E or E0
+            - Row 2: S-type count, 0 if not S or S0
     """
     # Initialize the matrix with zeros
     matrix = np.zeros((3, max_length))
@@ -43,13 +43,16 @@ def convert_to_matrix(input_list, max_length=20):
     for pos, type_code in input_list:
         if 1 <= pos <= max_length:
             idx = pos - 1
+            if type_code == 'E0' or type_code == 'S0':
+                continue  # Skip E0 and S0 as they represent empty positions
+            
             matrix[0, idx] = 1  # Mark presence
             if type_code.startswith('E'):
-                matrix[1, idx] = int(type_code[1:]) + 1
+                matrix[1, idx] = int(type_code[1:])
                 matrix[2, idx] = 0
             elif type_code.startswith('S'):
                 matrix[1, idx] = 0
-                matrix[2, idx] = int(type_code[1:]) + 1
+                matrix[2, idx] = int(type_code[1:])
     return matrix
 
 def process_csv_to_json(csv_file, output_file):
