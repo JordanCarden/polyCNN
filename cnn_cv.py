@@ -12,7 +12,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import KFold
 from torch.utils.data import DataLoader, Dataset
 
-from util import Simple1DCNN
+from train_targets import Simple1DCNN
 
 
 class ListDataset(Dataset):

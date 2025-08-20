@@ -9,9 +9,60 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from torch.utils.data import DataLoader
 
-from util import MatrixDataset, Simple1DCNN
+from torch.utils.data import DataLoader, Dataset
+
+
+class MatrixDataset(Dataset):
+    """Dataset for processed JSON matrices.
+
+    Args:
+        json_file: Path to the JSON file.
+        target_key: Target value key in each record.
+    """
+
+    def __init__(self, json_file: str, target_key: str):
+        with open(json_file, "r", encoding="utf-8") as f:
+            self.data = json.load(f)
+        self.target_key = target_key
+
+    def __len__(self) -> int:
+        return len(self.data)
+
+    def __getitem__(self, idx: int):
+        item = self.data[idx]
+        matrix = torch.tensor(item["input_matrix"], dtype=torch.float32)
+        target = torch.tensor([item[self.target_key]], dtype=torch.float32)
+        return matrix, target
+
+
+class Simple1DCNN(nn.Module):
+    """A small 1D CNN for regression tasks."""
+
+    def __init__(
+        self, input_size: int, hidden_size: int = 64, output_size: int = 1
+    ):
+        super().__init__()
+        self.conv1 = nn.Sequential(
+            nn.Conv1d(3, 16, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool1d(2),
+        )
+        self.flattened_size = 16 * (input_size // 2)
+        self.fc1 = nn.Linear(self.flattened_size, hidden_size)
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(0.2)
+        self.fc2 = nn.Linear(hidden_size, output_size)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        if x.ndim == 2:
+            x = x.view(x.size(0), 3, -1)
+        x = self.conv1(x)
+        x = x.view(x.size(0), -1)
+        x = self.fc1(x)
+        x = self.relu(x)
+        x = self.dropout(x)
+        return self.fc2(x)
 
 
 def set_seed(seed: int) -> None:

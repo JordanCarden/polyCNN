@@ -4,10 +4,50 @@ import os
 import random
 from typing import Dict, List
 
+import ast
+
 import numpy as np
 import pandas as pd
 
-from data_processor import convert_to_matrix, parse_input_list
+
+def parse_input_list(input_str: str) -> List[tuple]:
+    """Parse an input list string from the CSV.
+
+    Args:
+        input_str: String formatted like "[(1, 'E4'), (2, 'S2'), ...]".
+
+    Returns:
+        A list of ``(position, type)`` tuples.
+    """
+    input_str = input_str.strip()
+    try:
+        return ast.literal_eval(input_str)
+    except (SyntaxError, ValueError):
+        return []
+
+
+def convert_to_matrix(
+    input_list: List[tuple], max_length: int = 20
+) -> np.ndarray:
+    """Convert parsed tuples into the 3x``max_length`` matrix format.
+
+    Args:
+        input_list: Parsed ``(position, type)`` tuples.
+        max_length: Maximum sequence length.
+
+    Returns:
+        A ``numpy.ndarray`` representing the sequence.
+    """
+    matrix = np.zeros((3, max_length))
+    for pos, type_code in input_list:
+        if 1 <= pos <= max_length and type_code not in {"E0", "S0"}:
+            idx = pos - 1
+            matrix[0, idx] = 1
+            if type_code.startswith("E"):
+                matrix[1, idx] = int(type_code[1:])
+            elif type_code.startswith("S"):
+                matrix[2, idx] = int(type_code[1:])
+    return matrix
 
 
 def build_sample(row: pd.Series) -> Dict[str, object]:

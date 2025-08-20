@@ -7,7 +7,7 @@ import pandas as pd
 import torch
 from torch.utils.data import DataLoader, Dataset
 
-from util import Simple1DCNN
+from train_targets import Simple1DCNN
 
 
 class InferenceDataset(Dataset):
